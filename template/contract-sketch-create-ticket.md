@@ -29,12 +29,12 @@ Serve creare ticket dal supporto.
 
 ## Boundary Map
 
-| Superficie | Cosa riguarda | Nota |
-| --- | --- | --- |
-| UI | [cosa inserisce o vede l'utente] | [nota] |
-| API / azione | [input e output attesi] | [nota] |
-| Dati | [campi conservati o generati] | [nota] |
-| Verifica | [come controlli il comportamento] | [nota] |
+| Superficie   | Cosa riguarda                                                                                    | Nota               |
+| ------------ | ------------------------------------------------------------------------------------------------ | ------------------ |
+| UI           | [cosa inserisce o vede l'utente - vede un form - raccoglie l'input]                              | [nota]             |
+| API / azione | [input e output attesi - riceve la richiesta di creazione ticket e risponde con success o error] | [auth - permessi]  |
+| Dati         | [campi conservati o generati - definisce i campi minimi per creare un ticket ]                   | [schema data base] |
+| Verifica     | [usa payload valido e invalido]                                                                  | [test automatico]  |
 
 ## Action
 
@@ -48,13 +48,23 @@ Per questo slice, `create ticket` significa:
 
 ```json
 {
+    title: String , Required
+    description: String , Required
+    category: String , Required
+    attachments: document or photos, optional
+}
+
+{
+    "title": "Problema accesso area cliente",
+    "description": "Il cliente segnala che non riesce ad accedere alla propria area personale",
+    "category": "support"
 }
 ```
 
 Perche' e' valido:
 
-- [motivo 1]
-- [motivo 2]
+- [Perche Avere un titolo, description o category mi permette di individuare il perchè? del ticket e il livello d'importanza.
+  Senza quello sarebbe un ticket molto vago].
 
 ## Risposta Attesa Di Successo
 
@@ -67,36 +77,56 @@ Campi attesi:
 - [campo generato o restituito]
 - [campo confermato]
 
+```json
+{
+  "ticketId": "ticket_1",
+  "status": "created",
+  "createdAt": "25/06/2026-22:45"
+}
+```
+
 ## Payload Invalido 1
 
 ```json
 {
+  "description": "Il cliente segnala che non riesce ad accedere alla propria area personale",
+  "category": "support"
 }
 ```
 
 Motivo del rifiuto:
 
 ```txt
-[perche' e' invalido]
+[perche' e' invalido - Mancaza del titolo, anche se posso intuire che sia un problema per accedere all'area personale. Sicuramente con il title posso individuare sin da subito il problema.]
 ```
 
 Risposta attesa:
 
 ```txt
-[status o errore atteso]
+[status o errore atteso ]
+```
+
+```json
+{
+  "error": "validation-error, incomplete-fields",
+  "fields": "title"
+}
 ```
 
 ## Payload Invalido 2
 
 ```json
 {
+  "title": "Problema accesso area cliente",
+  "description": "",
+  "category": "support"
 }
 ```
 
 Motivo del rifiuto:
 
 ```txt
-[perche' e' invalido]
+[perche' e' invalido - Perche non basta sapere il titolo de ticket per avere un quadro generale del problema]
 ```
 
 Risposta attesa:
@@ -105,17 +135,22 @@ Risposta attesa:
 [status o errore atteso]
 ```
 
+```json
+{
+  "error": "validation-error, incomplete-fields",
+  "fields": "description"
+}
+```
+
 ## Error Model Minimo
 
-| Caso | Motivo | Risposta attesa |
-| --- | --- | --- |
-| Campo richiesto mancante o vuoto | [motivo] | [errore] |
-| Valore fuori contratto | [motivo] | [errore] |
+| Caso                             | Motivo                           | Risposta attesa                                |
+| -------------------------------- | -------------------------------- | ---------------------------------------------- |
+| Campo richiesto mancante o vuoto | [avere tutti i campi completati] | [errore - validation-error, incomplete fields] |
+| Valore fuori contratto           | [motivo]                         | [errore]                                       |
 
 ## Non-Goals Confermati
 
-- [cosa resta fuori scope]
-- [cosa non chiedere all'AI]
-- [cosa rimandare]
-
-
+- [cosa resta fuori scope] - tante cose
+- [cosa non chiedere all'AI] - che scriva codice
+- [cosa rimandare] - il layout?
